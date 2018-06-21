@@ -16,6 +16,7 @@ var ConvexPolyhedron = require('./ConvexPolyhedron');
  * @param {Number} numSegments The number of segments to build the cylinder out of
  */
 function Cylinder( radiusTop, radiusBottom, height , numSegments ) {
+    this.numSegments = numSegments;
     var N = numSegments,
         verts = [],
         axes = [],
@@ -77,3 +78,39 @@ function Cylinder( radiusTop, radiusBottom, height , numSegments ) {
 }
 
 Cylinder.prototype = new ConvexPolyhedron();
+
+Cylinder.prototype.resize = function(radiusTop, radiusBottom, height) {
+  var verts = this.vertices,
+      axes = this.uniqueAxes,
+      cos = Math.cos,
+      sin = Math.sin,
+      N = this.numSegments,
+      v = 0,
+      a = 0;
+    verts[v].set(radiusBottom * cos(0), radiusBottom * sin(0), -height * 0.5);
+    v++;
+    verts[v].set(radiusTop * cos(0), radiusTop * sin(0), height * 0.5);
+    v++;
+    for (var i=0; i<N; i++){
+        var theta = 2*Math.PI/N * (i+1);
+        if(i<N-1){
+            verts[v].set(radiusBottom*cos(theta),
+                                radiusBottom*sin(theta),
+                                -height*0.5);
+            v++;
+            verts[v].set(radiusTop*cos(theta),
+                                radiusTop*sin(theta),
+                                height*0.5);
+            v++;
+        }
+        if(N % 2 === 1 || i < N / 2){
+            var thetaN = 2*Math.PI/N * (i+0.5);
+            axes[a].set(cos(thetaN), sin(thetaN), 0);
+            a++;
+        }
+    }
+    this.computeNormals();
+    this.worldFaceNormalsNeedsUpdate = true;
+    this.computeEdges();
+    this.updateBoundingSphereRadius();
+};
